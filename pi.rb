@@ -14,20 +14,22 @@ java_import 'java.lang.System'
 java_import 'akka.util.Duration'
 java_import 'java.util.concurrent.TimeUnit'
 
-
+#Wrapper for a calculate message
 class Calculate
 end
 
-class Work
-  attr_reader :start, :no_of_chunks
+#Wrapper for a work unit
+class Work 
+  attr_reader :start, :no_of_elements
 
-  def initialize(start, no_of_chunks)
+  def initialize(start, no_of_elements)
     @start = start
-    @no_of_chunks = no_of_chunks
+    @no_of_elements = no_of_elements
   end
 end
 
-class Result
+#Wrapper for result
+class Result 
   attr_reader :value
 
   def initialize(value)
@@ -35,6 +37,7 @@ class Result
   end
 end
 
+#Wrapper for final result
 class PiApproximation
   attr_reader :pi, :duration
 
@@ -44,16 +47,17 @@ class PiApproximation
   end
 end
 
+#The Worker
 class Worker < UntypedActor
   class << self
     alias_method :apply, :new
     alias_method :create, :new
   end
 
-  def calculate_for_pi(start, no_of_chunks)
+  def calculate_for_pi(start, no_of_elements)
     acc = 0.0
-    start_elem = start * no_of_chunks
-    end_elem = (start + 1) * no_of_chunks - 1
+    start_elem = start * no_of_elements
+    end_elem = (start + 1) * no_of_elements - 1
 
     (start_elem..end_elem).each do |elem|
       acc = acc + (4.0 * (1 - (elem % 2) * 2) / (2 * elem + 1))
@@ -63,11 +67,12 @@ class Worker < UntypedActor
   end
 
   def onReceive(work)
-    result = calculate_for_pi(work.start, work.no_of_chunks)
+    result = calculate_for_pi(work.start, work.no_of_elements)
     getSender().tell(Result.new(result), get_self)
   end
 end
 
+#Master
 class Master < UntypedActor
   attr_accessor :start, :no_of_workers, :no_of_chunks, :no_of_elements, :listener, :pi, :no_of_results
   
@@ -128,7 +133,7 @@ class MasterFactory
 
   def self.create
     master = Master.new
-    master.no_of_workers = 4
+    master.no_of_workers = 8
     master.no_of_chunks = 10000
     master.no_of_elements = 10000
     master.listener = @@listener
